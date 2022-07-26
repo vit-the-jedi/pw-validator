@@ -2,7 +2,7 @@
 small js lib to validate your password fields
 
 # Purpose
-This script is a real-world example of a script i've written for a client site. I plan to continue to update and create new features for this project, beyond the scop of the clien'ts requirements.
+This script is a real-world example of a script i've written for a client site. I plan to continue to update and create new features for this project, beyond the scope of the client's requirements.
 
 # Requirements
 The client's site required password validation, using a set of rules to dictate whether the password was acceptable.
