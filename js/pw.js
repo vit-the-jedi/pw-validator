@@ -1,5 +1,6 @@
 "use strict";
 
+const accountForm = document.getElementById("create-account");
 const passwordInput = document.getElementById("user-password");
 const confirmPasswordInput = document.getElementById("user-confirm-password");
 const accountSubmitBtn = document.getElementById("account-submit");
@@ -15,6 +16,17 @@ const passwordValidateObj = {
     rule3: false,
     rule4: false,
     rule5: false,
+  },
+  validate() {
+    let invalid;
+    for (const ruleValue of Object.values(this.rules)) {
+      if (!ruleValue) {
+        invalid = false;
+      } else {
+        invalid = true;
+      }
+    }
+    return invalid;
   },
   //perform all required business logic on password creation
   performPasswordChecks: function () {
@@ -44,15 +56,6 @@ const passwordValidateObj = {
       ruleObj.rule5 = false;
     }
     performCriteriaStyleChange();
-    //toggle submit button if rules are all valid or if at least one is invalid
-    for (const ruleValue of Object.values(this["rules"])) {
-      if (ruleValue === false) {
-        disableSubmit();
-        return;
-      } else {
-        allowSubmit();
-      }
-    }
   },
   //chack against our minimum allowed password length
   checkMinimum: function () {
@@ -97,20 +100,48 @@ const passwordValidateObj = {
       this["rules"].rule4 = false;
     }
   },
+  //🛑 remove before production
+  test() {
+    for (const ruleKey of Object.keys(this.rules)) {
+      this.rules[ruleKey] = true;
+    }
+  },
 };
 //update our password object on keyup of password input
 const validatePasswordHandler = (e) => {
-  passwordValidateObj["eventTarget"] = e.currentTarget;
-  passwordValidateObj["password_string"] = e.currentTarget.value;
-  passwordValidateObj["password_length"] = e.currentTarget.value.length;
-  passwordValidateObj.performPasswordChecks();
+  if (e.type === "paste") {
+    pasteEventHandler(e);
+    return;
+  } else {
+    passwordValidateObj["eventTarget"] = e.currentTarget;
+    passwordValidateObj["password_string"] = e.currentTarget.value;
+    passwordValidateObj["password_length"] = e.currentTarget.value.length;
+    passwordValidateObj.performPasswordChecks();
+  }
 };
 //update our password object on keyup of confirm password input
-const confirmPasswordHandler = (e) => {
-  passwordValidateObj["confirm_password_string"] = e.currentTarget.value;
-  passwordValidateObj.performConfirmPasswordCheck();
+const validateConfirmPasswordHandler = (e) => {
+  if (e.type === "paste") {
+    pasteEventHandler(e);
+    return;
+  } else {
+    passwordValidateObj["confirm_password_string"] = e.currentTarget.value;
+    passwordValidateObj.performConfirmPasswordCheck();
+  }
 };
-
+const pasteEventHandler = function (ev) {
+  setTimeout(function () {
+    if (ev.target.id === "user-password") {
+      passwordValidateObj["eventTarget"] = ev.target;
+      passwordValidateObj["password_string"] = ev.target.value;
+      passwordValidateObj["password_length"] = ev.target.value.length;
+      passwordValidateObj.performPasswordChecks();
+    } else {
+      passwordValidateObj["confirm_password_string"] = ev.target.value;
+      passwordValidateObj.performConfirmPasswordCheck();
+    }
+  }, 100);
+};
 const performCriteriaStyleChange = function () {
   for (const [key, value] of Object.entries(passwordValidateObj["rules"])) {
     const ruleNum = key.slice(-1);
@@ -123,14 +154,6 @@ const performCriteriaStyleChange = function () {
   }
 };
 
-const allowSubmit = function () {
-  accountSubmitBtn.removeAttribute("disabled");
-};
-const disableSubmit = function () {
-  accountSubmitBtn.setAttribute("disabled", "disabled");
-};
-//disable submit btn on load
-disableSubmit();
 passwordInput.addEventListener("keyup", function (e) {
   const keyPressed = e.code || e.keyCode;
   //ignore certain keys so we aren't doing unnecessary work if keys arent nums/letters/symbols
@@ -144,10 +167,14 @@ passwordInput.addEventListener("keyup", function (e) {
     case "AltLeft":
     case "AltRight":
     case "Enter":
+    case "Tab":
       break;
     default:
       validatePasswordHandler(e);
   }
+});
+passwordInput.addEventListener("paste", function (e) {
+  validatePasswordHandler(e);
 });
 confirmPasswordInput.addEventListener("keyup", function (e) {
   const keyPressed = e.code || e.keyCode;
@@ -162,12 +189,15 @@ confirmPasswordInput.addEventListener("keyup", function (e) {
     case "AltLeft":
     case "AltRight":
     case "Enter":
+    case "Tab":
       break;
     default:
-      confirmPasswordHandler(e);
+      validateConfirmPasswordHandler(e);
   }
 });
-
+confirmPasswordInput.addEventListener("paste", function (e) {
+  validateConfirmPasswordHandler(e);
+});
 const pwViewToggle = (e) => {
   const target = e.target;
   const targetParent = document.querySelector(
